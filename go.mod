@@ -1,6 +1,6 @@
-module mynewt.apache.org/newtmgr
+module github.com/techrick/mynewt-newtmgr
 
-go 1.12
+go 1.20
 
 require (
 	github.com/JuulLabs-OSS/ble v0.0.0-20200716215611-d4fcc9d598bb
