@@ -20,8 +20,8 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.6.1
-	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/ugorji/go/codec v1.2.10
+	go.bug.st/serial v1.5.0
 	golang.org/x/net v0.8.0
 	gopkg.in/cheggaaa/pb.v1 v1.0.28
 	mynewt.apache.org/newt v0.0.0-20230307214303-0b46ad464e7a

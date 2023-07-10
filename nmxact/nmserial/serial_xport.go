@@ -32,7 +32,7 @@ import (
 	"github.com/joaojeronimo/go-crc16"
 	"github.com/runtimeco/go-coap"
 	log "github.com/sirupsen/logrus"
-	"github.com/tarm/serial"
+	"go.bug.st/serial"
 
 	"mynewt.apache.org/newt/util"
 	"mynewt.apache.org/newtmgr/nmxact/sesn"
@@ -56,7 +56,7 @@ func NewXportCfg() *XportCfg {
 
 type SerialXport struct {
 	cfg     *XportCfg
-	port    *serial.Port
+	port    serial.Port
 	scanner *bufio.Scanner
 
 	wg sync.WaitGroup
@@ -100,28 +100,45 @@ func (sx *SerialXport) acceptServerSesn(sl *SerialSesn) (*SerialSesn, error) {
 	return s, nil
 }
 
+func (sx *SerialXport) toggleDTR() {
+	time.Sleep(100 * time.Millisecond)
+	if err := sx.port.SetDTR(true); err != nil {
+		log.Errorf("Cannot set serialport DTR = 1: %v", err)
+	}
+	time.Sleep(100 * time.Millisecond)
+	if err := sx.port.SetDTR(false); err != nil {
+		log.Errorf("Cannot set serialport DTR = 0: %v", err)
+	}
+	time.Sleep(100 * time.Millisecond)
+}
+
 func (sx *SerialXport) Start() error {
 	if sx.port != nil {
 		// Already started.
 		return nil
 	}
 
-	c := &serial.Config{
-		Name:        sx.cfg.DevPath,
-		Baud:        sx.cfg.Baud,
-		ReadTimeout: sx.cfg.ReadTimeout,
+	mode := &serial.Mode{
+		BaudRate:          sx.cfg.Baud,
+		Parity:            serial.EvenParity,
+		DataBits:          8,
+		StopBits:          serial.OneStopBit,
+		InitialStatusBits: &serial.ModemOutputBits{DTR: false, RTS: false},
 	}
 
 	var err error
-	sx.port, err = serial.OpenPort(c)
+	sx.port, err = serial.Open(sx.cfg.DevPath, mode)
 	if err != nil {
 		return err
 	}
 
-	err = sx.port.Flush()
+	err = sx.port.SetReadTimeout(sx.cfg.ReadTimeout)
 	if err != nil {
+		log.Errorf("Cannot set serialport timeout: %v", err)
 		return err
 	}
+
+	sx.toggleDTR()
 
 	sx.wg.Add(1)
 	go func() {
